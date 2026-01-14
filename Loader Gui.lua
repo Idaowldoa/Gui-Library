@@ -484,9 +484,10 @@ function UILib.CreateExampleLoader()
     -- แสดง UI
     loaderUI:Show()
     
-    return loaderUI, statusLabel, versionLabel, userLabel]]
-end
+    return loaderUI, statusLabel, versionLabel, userLabel
+end]]
 
 -- ส่งคืน Library
 return UILib
+
 

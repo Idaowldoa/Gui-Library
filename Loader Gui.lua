@@ -424,8 +424,8 @@ function UILib.Create(title, sizeX, sizeY)
     return MainUI
 end
 
--- ฟังก์ชันสำหรับสร้าง Loader UI พร้อมตัวอย่าง
---[[function UILib.CreateExampleLoader()
+--[[ฟังก์ชันสำหรับสร้าง Loader UI พร้อมตัวอย่าง
+function UILib.CreateExampleLoader()
     local loaderUI = UILib.Create("Exploit Loader v1.0", 400, 500)
     
     -- เพิ่ม Label ด้านขวาตัวอย่าง
@@ -489,3 +489,4 @@ end
 
 -- ส่งคืน Library
 return UILib
+

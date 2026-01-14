@@ -2,6 +2,7 @@
   UI Library สำหรับ Roblox Exploit
   โดย: ผู้ใช้
   ใช้สำหรับสร้าง Loader UI ที่สวยงามและใช้งานง่าย
+  อัปเดต: เพิ่ม Label ด้านบนขวาได้
 --]]
 
 local UILib = {}
@@ -25,7 +26,8 @@ function UILib.Create(title, sizeX, sizeY)
         Size = {X = sizeX or 400, Y = sizeY or 500},
         Tabs = {},
         CurrentTab = nil,
-        Elements = {}
+        Elements = {},
+        RightLabels = {}
     }
     
     -- สร้างหน้าต่างหลัก
@@ -57,10 +59,10 @@ function UILib.Create(title, sizeX, sizeY)
     MainUI.TitleBar.BackgroundColor3 = UILib.Theme.Secondary
     MainUI.TitleBar.BorderSizePixel = 0
     
-    -- ข้อความหัวเรื่อง
+    -- ข้อความหัวเรื่อง (ซ้าย)
     MainUI.TitleLabel = Instance.new("TextLabel")
     MainUI.TitleLabel.Name = "TitleLabel"
-    MainUI.TitleLabel.Size = UDim2.new(1, -80, 1, 0)
+    MainUI.TitleLabel.Size = UDim2.new(0.5, -10, 1, 0)
     MainUI.TitleLabel.Position = UDim2.new(0, 10, 0, 0)
     MainUI.TitleLabel.BackgroundTransparency = 1
     MainUI.TitleLabel.Text = MainUI.Title
@@ -70,7 +72,25 @@ function UILib.Create(title, sizeX, sizeY)
     MainUI.TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     MainUI.TitleLabel.Parent = MainUI.TitleBar
     
-    -- ปุ่มปิด
+    -- Container สำหรับ Label ด้านขวา
+    MainUI.RightLabelContainer = Instance.new("Frame")
+    MainUI.RightLabelContainer.Name = "RightLabelContainer"
+    MainUI.RightLabelContainer.Size = UDim2.new(0.5, -50, 1, 0)
+    MainUI.RightLabelContainer.Position = UDim2.new(0.5, 0, 0, 0)
+    MainUI.RightLabelContainer.BackgroundTransparency = 1
+    MainUI.RightLabelContainer.Parent = MainUI.TitleBar
+    
+    -- UIListLayout สำหรับ Label ด้านขวา
+    local rightListLayout = Instance.new("UIListLayout")
+    rightListLayout.Name = "RightListLayout"
+    rightListLayout.FillDirection = Enum.FillDirection.Horizontal
+    rightListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    rightListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    rightListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    rightListLayout.Padding = UDim.new(0, 5)
+    rightListLayout.Parent = MainUI.RightLabelContainer
+    
+    -- ปุ่มปิด (ขวาสุด)
     MainUI.CloseButton = Instance.new("TextButton")
     MainUI.CloseButton.Name = "CloseButton"
     MainUI.CloseButton.Size = UDim2.new(0, 30, 0, 30)
@@ -131,6 +151,93 @@ function UILib.Create(title, sizeX, sizeY)
     MainUI.ContentContainer.Position = UDim2.new(0, 0, 0, 40)
     MainUI.ContentContainer.BackgroundTransparency = 1
     MainUI.ContentContainer.Parent = MainUI.MainFrame
+    
+    -- ฟังก์ชันสำหรับเพิ่ม Label ด้านขวา
+    function MainUI:AddRightLabel(text, textColor, fontSize)
+        local Label = {
+            Id = #self.RightLabels + 1,
+            Text = text or "",
+            TextColor = textColor or UILib.Theme.Text,
+            FontSize = fontSize or 14,
+            Visible = true
+        }
+        
+        -- สร้าง UI สำหรับ Label
+        local labelFrame = Instance.new("Frame")
+        labelFrame.Name = "RightLabel_" .. Label.Id
+        labelFrame.Size = UDim2.new(0, 0, 0, 20) -- Size จะปรับอัตโนมัติตามข้อความ
+        labelFrame.BackgroundTransparency = 1
+        labelFrame.LayoutOrder = Label.Id
+        
+        local labelText = Instance.new("TextLabel")
+        labelText.Name = "LabelText"
+        labelText.Size = UDim2.new(1, 0, 1, 0)
+        labelText.Position = UDim2.new(0, 0, 0, 0)
+        labelText.BackgroundTransparency = 1
+        labelText.Text = Label.Text
+        labelText.TextColor3 = Label.TextColor
+        labelText.TextSize = Label.FontSize
+        labelText.Font = Enum.Font.Gotham
+        labelText.TextXAlignment = Enum.TextXAlignment.Right
+        labelText.Parent = labelFrame
+        
+        -- เพิ่มใน Container
+        labelFrame.Parent = self.RightLabelContainer
+        
+        -- อัพเดทขนาดอัตโนมัติตามข้อความ
+        local function updateSize()
+            local textBounds = game:GetService("TextService"):GetTextSize(
+                labelText.Text,
+                labelText.TextSize,
+                labelText.Font,
+                Vector2.new(1000, 100)
+            )
+            labelFrame.Size = UDim2.new(0, textBounds.X + 5, 0, 20)
+        end
+        
+        updateSize()
+        
+        Label.Gui = labelFrame
+        Label.TextLabel = labelText
+        
+        -- ฟังก์ชันสำหรับอัพเดทข้อความ
+        function Label:UpdateText(newText)
+            self.Text = newText
+            labelText.Text = newText
+            updateSize()
+        end
+        
+        -- ฟังก์ชันสำหรับเปลี่ยนสีข้อความ
+        function Label:UpdateColor(newColor)
+            self.TextColor = newColor
+            labelText.TextColor3 = newColor
+        end
+        
+        -- ฟังก์ชันสำหรับเปลี่ยนขนาดฟอนต์
+        function Label:UpdateFontSize(newSize)
+            self.FontSize = newSize
+            labelText.TextSize = newSize
+            updateSize()
+        end
+        
+        -- ฟังก์ชันสำหรับแสดง/ซ่อน
+        function Label:SetVisible(visible)
+            self.Visible = visible
+            labelFrame.Visible = visible
+        end
+        
+        -- ฟังก์ชันสำหรับลบ Label
+        function Label:Destroy()
+            labelFrame:Destroy()
+            self.Gui = nil
+            self.TextLabel = nil
+        end
+        
+        -- เพิ่มลงในรายการ
+        table.insert(self.RightLabels, Label)
+        
+        return Label
+    end
     
     -- ฟังก์ชันสำหรับสร้าง Tab
     function MainUI:CreateTab(name)
@@ -300,6 +407,16 @@ function UILib.Create(title, sizeX, sizeY)
         return self
     end
     
+    -- ฟังก์ชันสำหรับลบ Label ด้านขวาทั้งหมด
+    function MainUI:ClearRightLabels()
+        for _, label in ipairs(self.RightLabels) do
+            if label.Gui then
+                label.Gui:Destroy()
+            end
+        end
+        self.RightLabels = {}
+    end
+    
     -- เตรียม UI สำหรับแสดง
     MainUI.TitleBar.Parent = MainUI.MainFrame
     MainUI.MainFrame.Parent = MainUI.ScreenGui
@@ -309,7 +426,12 @@ end
 
 -- ฟังก์ชันสำหรับสร้าง Loader UI พร้อมตัวอย่าง
 --[[function UILib.CreateExampleLoader()
-    local loaderUI = UILib.Create("Exploit Loader v1.0", 350, 450)
+    local loaderUI = UILib.Create("Exploit Loader v1.0", 400, 500)
+    
+    -- เพิ่ม Label ด้านขวาตัวอย่าง
+    local statusLabel = loaderUI:AddRightLabel("Status: Ready", UILib.Theme.Success, 12)
+    local versionLabel = loaderUI:AddRightLabel("v1.0.0", UILib.Theme.Accent, 12)
+    local userLabel = loaderUI:AddRightLabel("User: Player1", UILib.Theme.Text, 12)
     
     -- สร้าง Tab หลัก
     loaderUI:CreateTab("Main")
@@ -317,22 +439,40 @@ end
     -- สร้างปุ่มตัวอย่าง
     loaderUI:CreateButton("Load Script 1", function()
         print("กำลังโหลด Script 1...")
-        -- เพิ่มโค้ดสำหรับโหลดสคริปต์ที่นี่
+        statusLabel:UpdateText("Status: Loading...")
+        statusLabel:UpdateColor(UILib.Theme.Warning)
+        
+        -- จำลองการโหลด
+        wait(1)
+        statusLabel:UpdateText("Status: Loaded!")
+        statusLabel:UpdateColor(UILib.Theme.Success)
     end)
     
     loaderUI:CreateButton("Load Script 2", function()
         print("กำลังโหลด Script 2...")
-        -- เพิ่มโค้ดสำหรับโหลดสคริปต์ที่นี่
+        statusLabel:UpdateText("Status: Loading Script 2")
+        
+        -- จำลองการโหลด
+        wait(1)
+        statusLabel:UpdateText("Status: Script 2 Loaded")
     end)
     
-    loaderUI:CreateButton("Execute All", function()
-        print("กำลังรันสคริปต์ทั้งหมด...")
-        -- เพิ่มโค้ดสำหรับรันสคริปต์ทั้งหมดที่นี่
+    loaderUI:CreateButton("Change User Label", function()
+        userLabel:UpdateText("User: Updated")
+        userLabel:UpdateColor(UILib.Theme.Accent)
     end)
     
-    loaderUI:CreateButton("Clear Console", function()
-        print("ล้าง Console เรียบร้อยแล้ว")
-        -- เพิ่มโค้ดสำหรับล้าง Console ที่นี่
+    loaderUI:CreateButton("Clear Right Labels", function()
+        loaderUI:ClearRightLabels()
+    end)
+    
+    loaderUI:CreateButton("Add New Label", function()
+        local newLabel = loaderUI:AddRightLabel("New Label!", Color3.fromRGB(255, 105, 180), 12)
+        
+        -- เปลี่ยนข้อความหลังจาก 2 วินาที
+        wait(2)
+        newLabel:UpdateText("Updated After 2s")
+        newLabel:UpdateColor(Color3.fromRGB(144, 238, 144))
     end)
     
     -- ปุ่มสำหรับปิด Loader
@@ -344,6 +484,8 @@ end
     -- แสดง UI
     loaderUI:Show()
     
-    return loaderUI
-end]]
+    return loaderUI, statusLabel, versionLabel, userLabel]]
+end
+
+-- ส่งคืน Library
 return UILib
